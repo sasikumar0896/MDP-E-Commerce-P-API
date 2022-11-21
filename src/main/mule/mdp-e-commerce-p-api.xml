@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="af8ad230-64b6-4528-a052-f5ee54e6a147" environment="${env}" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="e09b1785-f2c6-40d2-b1e9-547ed1d84211" basePath="${https.orders.basepath}" >
+		<http:request-connection protocol="HTTPS" host="${https.orders.host}" port="${https.orders.port}" />
+	</http:request-config>
+	<flow name="mdp-e-commerce-p-apiFlow" doc:id="72891381-09d4-45d8-b35b-7b186d04cb09" >
+		<json-logger:logger doc:name="Start Log" doc:id="3c58c890-e72f-496b-b32d-8c29000942cc" config-ref="JSON_Logger_Config" message="mdp e-commerce process api flow started"/>
+		<ee:transform doc:name="Transform Message" doc:id="03987c80-a4a6-4119-941a-e27c9799d85f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="f70e2b2e-2fa5-48a8-9ca9-7ea30aa1b30b" config-ref="HTTP_Request_configuration" path="${online.https.orders.path}"/>
+		<json-logger:logger doc:name="End Log" doc:id="e70d717f-a007-4f25-89da-3245f073d2b1" config-ref="JSON_Logger_Config" message="mdp e-commerce process api flow ended" tracePoint="END"/>
+	</flow>
+	<sub-flow name="mdp-e-commerce-papi-update-subFlow" doc:id="ce038af3-18fa-4260-b934-1e4dcdcfa675" >
+		<json-logger:logger doc:name="Start Log" doc:id="471c5590-b8ff-428c-b8b7-03ba863f7f05" config-ref="JSON_Logger_Config" message="mdp-e-commerce-papi-update data flow started"/>
+		<ee:transform doc:name="Transform Message" doc:id="07c718ef-4385-4bec-a814-6b77f5b6a001" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="57dafeee-63ec-4597-83b4-39296fdd1fd5" config-ref="HTTP_Request_configuration" path="${online.https.orders.path}"/>
+		<json-logger:logger doc:name="End Log" doc:id="171d5814-5ef7-41ec-9d18-7147ab7b950a" config-ref="JSON_Logger_Config" message="mdp-e-commerce-papi-update data flow ended" tracePoint="END"/>
+	</sub-flow>
+</mule>
