@@ -1,0 +1,39 @@
+#%RAML 1.0
+title: MDP-e-commerce-P-API
+version: 1.0
+baseUri: http://localhost:8081/api
+description: API for building MDP e-commerce 
+protocols:
+  - HTTP
+  - HTTPS
+/create:
+  post:
+    description: To create a record
+    body:
+      application/json:
+        example: !include dataTypes/createData.raml
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include library-responses/200response-library.raml
+
+/select:
+  get:
+    description: To fetch the data from table
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include library-responses/200-fetch-responselibrary.raml
+/update:
+  put:
+    description: To update the data in table
+    body:
+      application/json:
+        example: !include dataTypes/createData.raml
+    responses:
+      200:
+        body:
+          application/json:
+            example : !include library-responses/200-update-responselibrary.raml

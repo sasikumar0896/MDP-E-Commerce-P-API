@@ -1,39 +1,168 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="af8ad230-64b6-4528-a052-f5ee54e6a147" environment="${env}" />
-	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="e09b1785-f2c6-40d2-b1e9-547ed1d84211" basePath="${https.orders.basepath}" >
-		<http:request-connection protocol="HTTPS" host="${https.orders.host}" port="${https.orders.port}" />
-	</http:request-config>
-	<flow name="mdp-e-commerce-p-apiFlow" doc:id="72891381-09d4-45d8-b35b-7b186d04cb09" >
-		<json-logger:logger doc:name="Start Log" doc:id="3c58c890-e72f-496b-b32d-8c29000942cc" config-ref="JSON_Logger_Config" message="mdp e-commerce process api flow started"/>
-		<ee:transform doc:name="Transform Message" doc:id="03987c80-a4a6-4119-941a-e27c9799d85f">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+    <http:listener-config name="mdp-e-commerce-p-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="mdp-e-commerce-p-api-config" api="mdp-e-commerce-p-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="335e0c9f-47cd-4acc-babf-31a40c1a3ff3" environment="${env}" />
+    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="43a243aa-eef1-4c3c-bafb-3e34ea764f8a" basePath="/orders">
+        <http:request-connection host="localhost" port="22" />
+    </http:request-config>
+    <configuration-properties doc:name="Configuration properties" doc:id="78c846f7-85c3-40a6-a026-1d36dc6a5d77" file="properties\mule.sb.properties" />
+	<flow name="mdp-e-commerce-p-api-main">
+        <http:listener config-ref="mdp-e-commerce-p-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="mdp-e-commerce-p-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="mdp-e-commerce-p-api-console">
+        <http:listener config-ref="mdp-e-commerce-p-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="mdp-e-commerce-p-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="put:\update:application\json:mdp-e-commerce-p-api-config">
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Data updated successfully"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\select:mdp-e-commerce-p-api-config">
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Data fetched successfully"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\create:application\json:mdp-e-commerce-p-api-config">
+        <json-logger:logger doc:name="Start Log" doc:id="8296e6b9-2870-4766-bfcc-6cf83f555f51" config-ref="JSON_Logger_Config" message="create data flow started" />
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 payload]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<http:request method="GET" doc:name="Request" doc:id="f70e2b2e-2fa5-48a8-9ca9-7ea30aa1b30b" config-ref="HTTP_Request_configuration" path="${online.https.orders.path}"/>
-		<json-logger:logger doc:name="End Log" doc:id="e70d717f-a007-4f25-89da-3245f073d2b1" config-ref="JSON_Logger_Config" message="mdp e-commerce process api flow ended" tracePoint="END"/>
-	</flow>
-	<sub-flow name="mdp-e-commerce-papi-update-subFlow" doc:id="ce038af3-18fa-4260-b934-1e4dcdcfa675" >
-		<json-logger:logger doc:name="Start Log" doc:id="471c5590-b8ff-428c-b8b7-03ba863f7f05" config-ref="JSON_Logger_Config" message="mdp-e-commerce-papi-update data flow started"/>
-		<ee:transform doc:name="Transform Message" doc:id="07c718ef-4385-4bec-a814-6b77f5b6a001" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<http:request method="GET" doc:name="Request" doc:id="57dafeee-63ec-4597-83b4-39296fdd1fd5" config-ref="HTTP_Request_configuration" path="${online.https.orders.path}"/>
-		<json-logger:logger doc:name="End Log" doc:id="171d5814-5ef7-41ec-9d18-7147ab7b950a" config-ref="JSON_Logger_Config" message="mdp-e-commerce-papi-update data flow ended" tracePoint="END"/>
-	</sub-flow>
+            </ee:message>
+        </ee:transform>
+        <http:request method="POST" doc:name="Request" doc:id="7bff207b-7348-4bf6-bbe8-c2f20cb9895b" config-ref="HTTP_Request_configuration" path="/create" />
+        <json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
+    </flow>
 </mule>
