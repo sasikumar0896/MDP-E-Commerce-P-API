@@ -5,10 +5,8 @@
     </http:listener-config>
     <apikit:config name="mdp-e-commerce-p-api-config" api="mdp-e-commerce-p-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="335e0c9f-47cd-4acc-babf-31a40c1a3ff3" environment="${env}" />
-    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="43a243aa-eef1-4c3c-bafb-3e34ea764f8a" basePath="/orders">
-        <http:request-connection host="localhost" port="22" />
-    </http:request-config>
-    <configuration-properties doc:name="Configuration properties" doc:id="78c846f7-85c3-40a6-a026-1d36dc6a5d77" file="properties\mule.sb.properties" />
+    
+    
 	<flow name="mdp-e-commerce-p-api-main">
         <http:listener config-ref="mdp-e-commerce-p-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -129,7 +127,8 @@ output application/json
         </error-handler>
     </flow>
     <flow name="put:\update:application\json:mdp-e-commerce-p-api-config">
-        <ee:transform>
+        <json-logger:logger doc:name="Start Log" doc:id="911f9661-b7bb-4e7a-ab2e-40e480a515a1" config-ref="JSON_Logger_Config" message="update data flow started"/>
+		<ee:transform>
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -139,9 +138,12 @@ output application/json
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="a8c8eb9a-d3c3-4c67-9643-79e5852b9ec0" config-ref="HTTP_Request_configuration" path="/update"/>
+		<json-logger:logger doc:name="End Log" doc:id="40f1e63c-f270-4f0e-8ccb-cca5d7e3b277" config-ref="JSON_Logger_Config" message="update data flow ended" tracePoint="END"/>
     </flow>
     <flow name="get:\select:mdp-e-commerce-p-api-config">
-        <ee:transform>
+		<json-logger:logger doc:name="Start Log" doc:id="ac71d95c-f2ea-4c3d-8b9c-97f3b4f26413" config-ref="JSON_Logger_Config" message="get data flow started"/>
+		<ee:transform>
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -151,6 +153,8 @@ output application/json
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="6586b8e9-a19b-404f-be40-db36edba900a" config-ref="HTTP_Request_configuration" path="/select"/>
+		<json-logger:logger doc:name="End Log" doc:id="2f8559b0-a0fe-4576-8438-cb84cdc8bcb8" config-ref="JSON_Logger_Config" message="get data flow ended" tracePoint="END"/>
     </flow>
     <flow name="post:\create:application\json:mdp-e-commerce-p-api-config">
         <json-logger:logger doc:name="Start Log" doc:id="8296e6b9-2870-4766-bfcc-6cf83f555f51" config-ref="JSON_Logger_Config" message="create data flow started" />
