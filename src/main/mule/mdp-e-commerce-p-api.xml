@@ -18,86 +18,7 @@
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="mdp-e-commerce-p-api-config" />
-        <error-handler>
-            <on-error-propagate type="APIKIT:BAD_REQUEST">
-                <ee:transform>
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Bad request"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:NOT_FOUND">
-                <ee:transform>
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Resource not found"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
-                <ee:transform>
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Method not allowed"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
-                <ee:transform>
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Not acceptable"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
-                <ee:transform>
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Unsupported media type"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
-                <ee:transform>
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Not Implemented"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-        </error-handler>
+		<error-handler ref="comon-error-handler" />
     </flow>
     <flow name="mdp-e-commerce-p-api-console">
         <http:listener config-ref="mdp-e-commerce-p-api-httpListenerConfig" path="/console/*">
@@ -110,21 +31,7 @@ output application/json
             </http:error-response>
         </http:listener>
         <apikit:console config-ref="mdp-e-commerce-p-api-config" />
-        <error-handler>
-            <on-error-propagate type="APIKIT:NOT_FOUND">
-                <ee:transform>
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Resource not found"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-        </error-handler>
+		<error-handler ref="comon-error-handler" />
     </flow>
     <flow name="put:\update:application\json:mdp-e-commerce-p-api-config">
         <json-logger:logger doc:name="Start Log" doc:id="911f9661-b7bb-4e7a-ab2e-40e480a515a1" config-ref="JSON_Logger_Config" message="update data flow started"/>
@@ -138,7 +45,7 @@ output application/json
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
-		<http:request method="POST" doc:name="Request" doc:id="a8c8eb9a-d3c3-4c67-9643-79e5852b9ec0" config-ref="HTTP_Request_configuration" path="/update"/>
+		<http:request method="POST" doc:name="Request" doc:id="a8c8eb9a-d3c3-4c67-9643-79e5852b9ec0" config-ref="HTTP_Request_configuration" path="${orders.https.update.path}"/>
 		<json-logger:logger doc:name="End Log" doc:id="40f1e63c-f270-4f0e-8ccb-cca5d7e3b277" config-ref="JSON_Logger_Config" message="update data flow ended" tracePoint="END"/>
     </flow>
     <flow name="get:\select:mdp-e-commerce-p-api-config">
@@ -153,12 +60,12 @@ output application/json
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
-		<http:request method="POST" doc:name="Request" doc:id="6586b8e9-a19b-404f-be40-db36edba900a" config-ref="HTTP_Request_configuration" path="/select"/>
+		<http:request method="POST" doc:name="Request" doc:id="6586b8e9-a19b-404f-be40-db36edba900a" config-ref="HTTP_Request_configuration" path="${orders.https.path}"/>
 		<json-logger:logger doc:name="End Log" doc:id="2f8559b0-a0fe-4576-8438-cb84cdc8bcb8" config-ref="JSON_Logger_Config" message="get data flow ended" tracePoint="END"/>
     </flow>
     <flow name="post:\create:application\json:mdp-e-commerce-p-api-config">
         <json-logger:logger doc:name="Start Log" doc:id="8296e6b9-2870-4766-bfcc-6cf83f555f51" config-ref="JSON_Logger_Config" message="create data flow started" />
-        <ee:transform>
+		<ee:transform>
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -166,7 +73,7 @@ output application/json
 payload]]></ee:set-payload>
             </ee:message>
         </ee:transform>
-        <http:request method="POST" doc:name="Request" doc:id="7bff207b-7348-4bf6-bbe8-c2f20cb9895b" config-ref="HTTP_Request_configuration" path="/create" />
-        <json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
+        <http:request method="POST" doc:name="Request" doc:id="cec1e9f9-0092-4fb7-819c-79cdb48bf755" config-ref="HTTP_Request_configuration" path="${orders.https.get.path}"/>
+		<json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
     </flow>
 </mule>

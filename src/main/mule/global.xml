@@ -6,7 +6,7 @@
 	xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
 	<configuration-properties doc:name="Configuration properties" doc:id="444f9f3d-cf86-4b0e-8881-4fae85994270" file="properties\mule.sb.properties" />
-	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="f16f7093-c5c6-4c5c-916e-3f8ebe5e6378" basePath="/orders">
-        <http:request-connection host="localhost" port="22" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="f16f7093-c5c6-4c5c-916e-3f8ebe5e6378" basePath="${orders.https.basepath}">
+        <http:request-connection host="${orders.https.host}" port="${orders.https.port}" />
     </http:request-config>
 	</mule>
