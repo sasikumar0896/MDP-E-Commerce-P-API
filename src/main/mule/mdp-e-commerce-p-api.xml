@@ -2,7 +2,7 @@
 <mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
     <http:listener-config name="mdp-e-commerce-p-api-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="8081" />
+        <http:listener-connection host="${https.listener.host}" port="${https.listener.port}" readTimeout="${https.listener.timeout}"/>
     </http:listener-config>
     <apikit:config name="mdp-e-commerce-p-api-config" api="mdp-e-commerce-p-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="335e0c9f-47cd-4acc-babf-31a40c1a3ff3" environment="${env}" />
@@ -39,40 +39,40 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
     </flow>
     <flow name="post:\create:application\json:mdp-e-commerce-p-api-config">
         <json-logger:logger doc:name="Start Log" doc:id="8296e6b9-2870-4766-bfcc-6cf83f555f51" config-ref="JSON_Logger_Config" message="create data flow started" />
-		<ee:transform>
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-	"status" : "success"
-}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
         <flow-ref doc:name="Flow Reference" doc:id="9759af28-b126-4a0c-8428-8a0b0a3b046d" name="mdp-e-commerce-p-apiSub_Flow"/>
-		<http:request method="POST" doc:name="Request" doc:id="cec1e9f9-0092-4fb7-819c-79cdb48bf755" config-ref="HTTP_Request_configuration" path="${orders.https.get.path}"/>
-		<json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
-    </flow>
-	<sub-flow name="mdp-e-commerce-p-apiSub_Flow" doc:id="e734d044-09be-4019-832d-9b2a14e87f20" >
-		<json-logger:logger doc:name="Start Log" doc:id="50f1bcf7-ddf5-422c-9e8a-9a404b9ebd45" config-ref="JSON_Logger_Config" message="salesforce insert data flow started"/>
-		<ee:transform doc:name="Transform Message" doc:id="b200101b-3f03-4a88-83b9-0b79dd371696" >
+		<!-- <http:request method="POST" doc:name="Request" doc:id="cec1e9f9-0092-4fb7-819c-79cdb48bf755" config-ref="HTTP_Request_configuration" path="${orders.https.get.path}"/> -->
+		<ee:transform doc:name="Transform Message" doc:id="f8c3a896-e60b-4916-9c94-e50673492279" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
 ---
 {
-	"order_id" : "1",
-	"customer_name" : "Ediva Ungerechts",
-	"product" : "Rabbit - Saddles",
-	"customer_address" : "6785 Eliot Road",
-	"customer_contact" : "7262604712",
-	"order_type" : "online",
-	"regionOfSale" : "Oklahoma",
-	"orderValue" : "813.23"
-	
+	"message"  : "success in process layer"
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
+    </flow>
+	<sub-flow name="mdp-e-commerce-p-apiSub_Flow" doc:id="e734d044-09be-4019-832d-9b2a14e87f20" >
+		<json-logger:logger doc:name="Start Log" doc:id="50f1bcf7-ddf5-422c-9e8a-9a404b9ebd45" config-ref="JSON_Logger_Config" message="salesforce insert data flow started"/>
+		 <ee:transform doc:name="Transform Message" doc:id="b200101b-3f03-4a88-83b9-0b79dd371696" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"order_id_c" : "1",
+	"customer_name_c" : "Ediva-Ungerechts",
+	"product_c" : "Rabbit - Saddles",
+	"customer_address_c" : "6785 Eliot Road",
+	"customer_contact_c" : "7262604712",
+	"order_type_c" : "online",
+	"regionOfSale_c" : "Oklahoma",
+	"orderValue_c" : "813.23"
+	
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform> 
 		<salesforce:create doc:name="Create" doc:id="cc34ec9c-2808-4d68-93ca-be6bbef348d3" config-ref="Salesforce_Config" type="Orders__c"/>
 		<json-logger:logger doc:name="End Log" doc:id="b13e032d-d931-4c4d-b681-2c9cf03f9a5b" config-ref="JSON_Logger_Config" message="salesforce insert data flow ended" tracePoint="END"/>
 	</sub-flow>
