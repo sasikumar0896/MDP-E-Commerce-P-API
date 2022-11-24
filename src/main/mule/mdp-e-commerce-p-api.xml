@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
     <http:listener-config name="mdp-e-commerce-p-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
@@ -7,14 +8,17 @@
     <json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="335e0c9f-47cd-4acc-babf-31a40c1a3ff3" environment="${env}" />
     
     
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="92874c0b-77ed-4dfb-8675-dbf5e863bc09" >
+		<salesforce:basic-connection username="sasikudimi96@force.com" password="Sasikumar@96" securityToken="KFOjrccGfKdE0iRGgQ3wNty9c" />
+	</salesforce:sfdc-config>
 	<flow name="mdp-e-commerce-p-api-main">
-        <http:listener config-ref="mdp-e-commerce-p-api-httpListenerConfig" path="/api/*">
+        <http:listener config-ref="mdp-e-commerce-p-api-httpListenerConfig" path="${https.listener.path}">
             <http:response statusCode="#[vars.httpStatus default 200]">
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
             <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body>#[payload]</http:body>
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="mdp-e-commerce-p-api-config" />
@@ -33,36 +37,6 @@
         <apikit:console config-ref="mdp-e-commerce-p-api-config" />
 		<error-handler ref="comon-error-handler" />
     </flow>
-    <flow name="put:\update:application\json:mdp-e-commerce-p-api-config">
-        <json-logger:logger doc:name="Start Log" doc:id="911f9661-b7bb-4e7a-ab2e-40e480a515a1" config-ref="JSON_Logger_Config" message="update data flow started"/>
-		<ee:transform>
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  message: "Data updated successfully"
-}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
-		<http:request method="POST" doc:name="Request" doc:id="a8c8eb9a-d3c3-4c67-9643-79e5852b9ec0" config-ref="HTTP_Request_configuration" path="${orders.https.update.path}"/>
-		<json-logger:logger doc:name="End Log" doc:id="40f1e63c-f270-4f0e-8ccb-cca5d7e3b277" config-ref="JSON_Logger_Config" message="update data flow ended" tracePoint="END"/>
-    </flow>
-    <flow name="get:\select:mdp-e-commerce-p-api-config">
-		<json-logger:logger doc:name="Start Log" doc:id="ac71d95c-f2ea-4c3d-8b9c-97f3b4f26413" config-ref="JSON_Logger_Config" message="get data flow started"/>
-		<ee:transform>
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  message: "Data fetched successfully"
-}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
-		<http:request method="POST" doc:name="Request" doc:id="6586b8e9-a19b-404f-be40-db36edba900a" config-ref="HTTP_Request_configuration" path="${orders.https.path}"/>
-		<json-logger:logger doc:name="End Log" doc:id="2f8559b0-a0fe-4576-8438-cb84cdc8bcb8" config-ref="JSON_Logger_Config" message="get data flow ended" tracePoint="END"/>
-    </flow>
     <flow name="post:\create:application\json:mdp-e-commerce-p-api-config">
         <json-logger:logger doc:name="Start Log" doc:id="8296e6b9-2870-4766-bfcc-6cf83f555f51" config-ref="JSON_Logger_Config" message="create data flow started" />
 		<ee:transform>
@@ -70,10 +44,36 @@ output application/json
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-payload]]></ee:set-payload>
+{
+	"status" : "success"
+}]]></ee:set-payload>
             </ee:message>
         </ee:transform>
-        <http:request method="POST" doc:name="Request" doc:id="cec1e9f9-0092-4fb7-819c-79cdb48bf755" config-ref="HTTP_Request_configuration" path="${orders.https.get.path}"/>
+        <flow-ref doc:name="Flow Reference" doc:id="9759af28-b126-4a0c-8428-8a0b0a3b046d" name="mdp-e-commerce-p-apiSub_Flow"/>
+		<http:request method="POST" doc:name="Request" doc:id="cec1e9f9-0092-4fb7-819c-79cdb48bf755" config-ref="HTTP_Request_configuration" path="${orders.https.get.path}"/>
 		<json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
     </flow>
+	<sub-flow name="mdp-e-commerce-p-apiSub_Flow" doc:id="e734d044-09be-4019-832d-9b2a14e87f20" >
+		<json-logger:logger doc:name="Start Log" doc:id="50f1bcf7-ddf5-422c-9e8a-9a404b9ebd45" config-ref="JSON_Logger_Config" message="salesforce insert data flow started"/>
+		<ee:transform doc:name="Transform Message" doc:id="b200101b-3f03-4a88-83b9-0b79dd371696" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"order_id" : "1",
+	"customer_name" : "Ediva Ungerechts",
+	"product" : "Rabbit - Saddles",
+	"customer_address" : "6785 Eliot Road",
+	"customer_contact" : "7262604712",
+	"order_type" : "online",
+	"regionOfSale" : "Oklahoma",
+	"orderValue" : "813.23"
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create" doc:id="cc34ec9c-2808-4d68-93ca-be6bbef348d3" config-ref="Salesforce_Config" type="Orders__c"/>
+		<json-logger:logger doc:name="End Log" doc:id="b13e032d-d931-4c4d-b681-2c9cf03f9a5b" config-ref="JSON_Logger_Config" message="salesforce insert data flow ended" tracePoint="END"/>
+	</sub-flow>
 </mule>
