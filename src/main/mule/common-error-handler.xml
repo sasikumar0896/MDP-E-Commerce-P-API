@@ -86,6 +86,25 @@ output application/json
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
-		
+	<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="2b957295-4ba9-44ee-a11d-e95efb09876a" type="ANY">
+			<flow-ref doc:name="Flow Reference" doc:id="75eda37e-7d4c-414f-9d7a-5a548991c6b0" name="common-error-handlerSub_Flow"/>
+
+		</on-error-propagate>
 	</error-handler>
+	<sub-flow name="common-error-handlerSub_Flow" doc:id="4ce712ed-58aa-4396-b0b1-6de6c3f91869" >
+		<logger level="WARN" doc:name="LOG INFO" doc:id="61fb2337-38d3-4d7e-8621-cf3b41291087" message="#[write(error..message distinctBy $, 'application/java') default error]" />
+		<ee:transform doc:name="Error Var" doc:id="364a5a59-c5ed-4039-9b6c-895c1083c341">
+			
+			<ee:variables>
+				<ee:set-variable resource="dwl/error/http-status.dwl" variableName="httpStatus" />
+				<ee:set-variable resource="dwl/error/error-var.dwl" variableName="errorVar" />
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Bad request httpStatus 400" doc:id="33593523-7464-491b-a3b0-49e5d206c810">
+				<ee:message>
+					<ee:set-payload resource="dwl/error/error-handler-response.dwl" />
+				</ee:message>
+			</ee:transform>
+	</sub-flow>
+	
 </mule>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
-http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
     <http:listener-config name="mdp-e-commerce-p-api-httpListenerConfig">
         <http:listener-connection host="${https.listener.host}" port="${https.listener.port}" readTimeout="${https.listener.timeout}"/>
     </http:listener-config>
@@ -39,7 +40,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
     </flow>
     <flow name="post:\create:application\json:mdp-e-commerce-p-api-config">
         <json-logger:logger doc:name="Start Log" doc:id="8296e6b9-2870-4766-bfcc-6cf83f555f51" config-ref="JSON_Logger_Config" message="create data flow started" />
-        <flow-ref doc:name="Flow Reference" doc:id="9759af28-b126-4a0c-8428-8a0b0a3b046d" name="mdp-e-commerce-p-apiSub_Flow"/>
+        <flow-ref doc:name="Flow Reference" doc:id="9759af28-b126-4a0c-8428-8a0b0a3b046d" name="mdp-e-commerce-p-apiFlow"/>
 		<!-- <http:request method="POST" doc:name="Request" doc:id="cec1e9f9-0092-4fb7-819c-79cdb48bf755" config-ref="HTTP_Request_configuration" path="${orders.https.get.path}"/> -->
 		<ee:transform doc:name="Transform Message" doc:id="f8c3a896-e60b-4916-9c94-e50673492279" >
 			<ee:message >
@@ -51,13 +52,17 @@ output application/java
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="2cd2bf3b-c6a2-466b-9d1a-b5a52fb0eeb2" config-ref="HTTP_Request_configuration" path="${orders.https.path}"/>
 		<json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
     </flow>
-	<sub-flow name="mdp-e-commerce-p-apiSub_Flow" doc:id="e734d044-09be-4019-832d-9b2a14e87f20" >
-		<json-logger:logger doc:name="Start Log" doc:id="50f1bcf7-ddf5-422c-9e8a-9a404b9ebd45" config-ref="JSON_Logger_Config" message="salesforce insert data flow started"/>
-		 <ee:transform doc:name="Transform Message" doc:id="b200101b-3f03-4a88-83b9-0b79dd371696" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+	<flow name="mdp-e-commerce-p-apiFlow" doc:id="0c6cb3cf-f249-4668-adbf-0191a8090d5d" >
+		<json-logger:logger doc:name="Start Log" doc:id="5e8afb51-cacb-491d-a570-1d48341493b7" config-ref="JSON_Logger_Config" message="Batch job process flow started" />
+		<batch:job jobName="mdp-e-commerce-p-apiBatch_Job" doc:id="775880fd-f2c2-455c-ac4f-a22bb0167273" blockSize="50">
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="669e0b1b-8136-4ba4-9bd8-f47a0f5bc90e" acceptPolicy="ALL">
+					<ee:transform doc:name="Transform Message" doc:id="b200101b-3f03-4a88-83b9-0b79dd371696">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 [{
@@ -72,8 +77,15 @@ output application/java
 	
 }]]]></ee:set-payload>
 			</ee:message>
-		</ee:transform> 
-		<salesforce:create doc:name="Create" doc:id="cc34ec9c-2808-4d68-93ca-be6bbef348d3" config-ref="Salesforce_Config" type="Orders__c"/>
-		<json-logger:logger doc:name="End Log" doc:id="b13e032d-d931-4c4d-b681-2c9cf03f9a5b" config-ref="JSON_Logger_Config" message="salesforce insert data flow ended" tracePoint="END"/>
-	</sub-flow>
+		</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="628d96ae-a7f0-466f-b3c9-003f81c3fea4" size="30">
+						<salesforce:create doc:name="Create" doc:id="cc34ec9c-2808-4d68-93ca-be6bbef348d3" config-ref="Salesforce_Config" type="Orders__c" />
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<json-logger:logger doc:name="End Log" doc:id="ee66156b-a11e-41ce-bdfd-3fd14210f1a5" config-ref="JSON_Logger_Config" message="Batch job process flow ended" tracePoint="END"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
 </mule>
