@@ -42,16 +42,7 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
         <json-logger:logger doc:name="Start Log" doc:id="8296e6b9-2870-4766-bfcc-6cf83f555f51" config-ref="JSON_Logger_Config" message="create data flow started" />
         <flow-ref doc:name="Flow Reference" doc:id="9759af28-b126-4a0c-8428-8a0b0a3b046d" name="mdp-e-commerce-p-apiFlow"/>
 		<!-- <http:request method="POST" doc:name="Request" doc:id="cec1e9f9-0092-4fb7-819c-79cdb48bf755" config-ref="HTTP_Request_configuration" path="${orders.https.get.path}"/> -->
-		<ee:transform doc:name="Transform Message" doc:id="f8c3a896-e60b-4916-9c94-e50673492279" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-{
-	"message"  : "success in process layer"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="be38775b-4c4e-403b-a075-257bdc4125ac" name="mdp-e-commerce-p-apiSub_Flow"/>
 		<http:request method="POST" doc:name="Request" doc:id="2cd2bf3b-c6a2-466b-9d1a-b5a52fb0eeb2" config-ref="HTTP_Request_configuration" path="${orders.https.path}"/>
 		<json-logger:logger doc:name="End Log" doc:id="c8919439-b6b1-4e72-b9fb-058defe838dc" config-ref="JSON_Logger_Config" message="create data flow ended" tracePoint="END" />
     </flow>
@@ -88,4 +79,19 @@ output application/java
 			</batch:on-complete>
 		</batch:job>
 	</flow>
+	<sub-flow name="mdp-e-commerce-p-apiSub_Flow" doc:id="cc6d4eb8-56e1-4e67-b0ad-4b7bd1035129" >
+		<json-logger:logger doc:name="Start Log" doc:id="86ee3827-119a-45e6-b57c-55692f788f16" config-ref="JSON_Logger_Config" message="Data fetching from salesforce flow started"/>
+		<salesforce:query doc:name="Query" doc:id="3ac6accd-1bc0-425d-ae9c-752447ad4037" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[Select order_id,customer_name,product,customer_address,customer_contact,order_type,regionOfSale,orderValue from Orders_c]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="63b0f7c2-7344-4446-8596-514e1a857ade" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End Log" doc:id="4b8e81ed-54e0-422d-b5da-7d8c0e087ac2" config-ref="JSON_Logger_Config" message="Data fetching from salesforce flow ended" tracePoint="END"/>
+	</sub-flow>
 </mule>

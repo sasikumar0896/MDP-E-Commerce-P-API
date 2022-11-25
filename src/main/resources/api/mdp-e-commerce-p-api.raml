@@ -18,22 +18,3 @@ protocols:
           application/json:
             example: !include library-responses/200response-library.raml
 
-/select:
-  get:
-    description: To fetch the data from table
-    responses:
-      200:
-        body:
-          application/json:
-            example: !include library-responses/200-fetch-responselibrary.raml
-/update:
-  put:
-    description: To update the data in table
-    body:
-      application/json:
-        example: !include dataTypes/createData.raml
-    responses:
-      200:
-        body:
-          application/json:
-            example : !include library-responses/200-update-responselibrary.raml
